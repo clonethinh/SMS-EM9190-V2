@@ -6,6 +6,7 @@ class SMSManager {
         this.currentPage = 1;
         this.itemsPerPage = 20;
         this.refreshing = false;
+        this.exporting = false;
         this.selectedMessages = new Set();
         this.filters = {
             type: '',
@@ -265,113 +266,141 @@ class SMSManager {
         return isConnected;
     }
 
-    // Event Bindings
     bindEvents() {
-        document.getElementById('refreshBtn')?.addEventListener('click', () => {
-            this.refreshMessages();
-        });
+        // --- SAFE BINDING FOR MAIN BUTTONS ---
     
-        // Quick actions - THÊM DÒNG NÀY
-        document.getElementById('newMessageBtn')?.addEventListener('click', () => {
-            console.log('New message button clicked via bindEvents');
-            this.openNewMessageModal();
-        });
+        // Export button
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) {
+            const newBtn = exportBtn.cloneNode(true);
+            exportBtn.replaceWith(newBtn);
+            newBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Export button clicked');
+                this.exportMessages();
+            });
+        }
     
-        document.getElementById('exportBtn')?.addEventListener('click', () => {
-            this.exportMessages();
-        });
+        // Refresh button
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            const newBtn = refreshBtn.cloneNode(true);
+            refreshBtn.replaceWith(newBtn);
+            newBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.refreshMessages();
+            });
+        }
     
-        document.getElementById('bulkDeleteBtn')?.addEventListener('click', () => {
-            this.bulkDeleteMessages();
-        });
-        // Header actions
-        document.getElementById('refreshBtn').addEventListener('click', () => {
-            this.refreshMessages();
-        });
-
-        // Quick actions
-        document.getElementById('newMessageBtn').addEventListener('click', () => {
-            this.openNewMessageModal();
-        });
-
-        document.getElementById('exportBtn').addEventListener('click', () => {
-            this.exportMessages();
-        });
-
-        document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
-            this.bulkDeleteMessages();
-        });
-
+        // New Message button
+        const newMessageBtn = document.getElementById('newMessageBtn');
+        if (newMessageBtn) {
+            const newBtn = newMessageBtn.cloneNode(true);
+            newMessageBtn.replaceWith(newBtn);
+            newBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.openNewMessageModal();
+            });
+        }
+    
+        // Bulk delete button
+        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+        if (bulkDeleteBtn) {
+            const newBtn = bulkDeleteBtn.cloneNode(true);
+            bulkDeleteBtn.replaceWith(newBtn);
+            newBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.bulkDeleteMessages();
+            });
+        }
+    
+        // --- OTHER EVENT BINDINGS ---
+    
         // View tabs
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 this.switchView(e.target.dataset.view);
             });
         });
-
+    
         // Filters
-        document.getElementById('applyFilter').addEventListener('click', () => {
+        document.getElementById('applyFilter')?.addEventListener('click', () => {
             this.applyFilters();
         });
-
-        document.getElementById('clearFilter').addEventListener('click', () => {
+    
+        document.getElementById('clearFilter')?.addEventListener('click', () => {
             this.clearFilters();
         });
-
-        // Search
+    
+        // Search input
         const searchInput = document.getElementById('searchInput');
         let searchTimeout;
-        searchInput.addEventListener('input', (e) => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                this.filters.search = e.target.value;
-                this.applyFilters();
-            }, 500);
-        });
-
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    this.filters.search = e.target.value;
+                    this.applyFilters();
+                }, 500);
+            });
+        }
+    
         // Bulk actions
-        document.getElementById('selectAllBtn').addEventListener('click', () => {
+        document.getElementById('selectAllBtn')?.addEventListener('click', () => {
             this.toggleSelectAll();
         });
-
-        document.getElementById('markReadBtn').addEventListener('click', () => {
+    
+        document.getElementById('markReadBtn')?.addEventListener('click', () => {
             this.markSelectedAsRead();
         });
-
-        document.getElementById('deleteSelectedBtn').addEventListener('click', () => {
+    
+        document.getElementById('deleteSelectedBtn')?.addEventListener('click', () => {
             this.deleteSelectedMessages();
         });
-
+    
         // Pagination
-        document.getElementById('itemsPerPage').addEventListener('change', (e) => {
-            this.itemsPerPage = parseInt(e.target.value);
-            this.currentPage = 1;
-            this.renderMessages();
-        });
-
+        const itemsPerPage = document.getElementById('itemsPerPage');
+        if (itemsPerPage) {
+            itemsPerPage.addEventListener('change', (e) => {
+                this.itemsPerPage = parseInt(e.target.value);
+                this.currentPage = 1;
+                this.renderMessages();
+            });
+        }
+    
         // New message form
         const messageForm = document.getElementById('newMessageForm');
-        messageForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.sendMessage();
-        });
-
+        if (messageForm) {
+            messageForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.sendMessage();
+            });
+        }
+    
         // Character counter
         const messageContent = document.getElementById('messageContent');
-        messageContent.addEventListener('input', () => {
-            this.updateCharCount();
-        });
-
+        if (messageContent) {
+            messageContent.addEventListener('input', () => {
+                this.updateCharCount();
+            });
+        }
+    
         // Template selector
         const templateSelect = document.getElementById('messageTemplate');
-        templateSelect.addEventListener('change', (e) => {
-            if (e.target.value) {
-                messageContent.value = this.templates[e.target.value];
-                this.updateCharCount();
-            }
-        });
-
-        // Modal close events
+        if (templateSelect) {
+            templateSelect.addEventListener('change', (e) => {
+                if (e.target.value) {
+                    messageContent.value = this.templates[e.target.value];
+                    this.updateCharCount();
+                }
+            });
+        }
+    
+        // Modal close (click outside or close icon)
         document.querySelectorAll('.modal-close, .modal-overlay').forEach(el => {
             el.addEventListener('click', (e) => {
                 if (e.target === el) {
@@ -379,7 +408,7 @@ class SMSManager {
                 }
             });
         });
-
+    
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -395,6 +424,7 @@ class SMSManager {
             }
         });
     }
+
 
     // Modal Management
     setupModals() {
@@ -1198,25 +1228,37 @@ class SMSManager {
     }
 
     renderMessageStatus(message) {
-        if (!message.read && message.type === 'received') {
-            return '<span class="status-badge unread">Chưa đọc</span>';
-        }
+        if (!message) return '<span class="status-badge unknown">Không xác định</span>';
         
-        if (message.type === 'sent') {
-            switch (message.status) {
-                case 'sent':
-                    return '<span class="status-badge sent">Đã gửi</span>';
-                case 'delivered':
-                    return '<span class="status-badge delivered">Đã nhận</span>';
-                case 'failed':
-                    return '<span class="status-badge failed">Thất bại</span>';
-                default:
-                    return '<span class="status-badge pending">Đang gửi</span>';
+        // Xử lý tin nhắn nhận được
+        if (message.type === 'received') {
+            if (!message.read) {
+                return '<span class="status-badge unread"><i class="bx bx-error-circle"></i> Chưa đọc</span>';
+            } else {
+                return '<span class="status-badge read"><i class="bx bx-check-circle"></i> Đã đọc</span>';
             }
         }
         
-        return '';
+        // Xử lý tin nhắn gửi đi
+        if (message.type === 'sent') {
+            switch (message.status) {
+                case 'sent':
+                    return '<span class="status-badge sent"><i class="bx bx-check"></i> Đã gửi</span>';
+                case 'delivered':
+                    return '<span class="status-badge delivered"><i class="bx bx-check-double"></i> Đã nhận</span>';
+                case 'failed':
+                    return '<span class="status-badge failed"><i class="bx bx-x-circle"></i> Gửi thất bại</span>';
+                case 'pending':
+                    return '<span class="status-badge pending"><i class="bx bx-time"></i> Đang gửi</span>';
+                default:
+                    return '<span class="status-badge sent"><i class="bx bx-check"></i> Đã gửi</span>';
+            }
+        }
+        
+        // Fallback cho trường hợp không xác định được type
+        return '<span class="status-badge unknown"><i class="bx bx-help-circle"></i> Không xác định</span>';
     }
+
 
     renderMessageDetail(message) {
         const timeFormatted = this.formatDateTime(message.timestamp);
@@ -1258,7 +1300,11 @@ class SMSManager {
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Lưu trữ:</span>
-                        <span class="detail-value">${message.storage ? message.storage.toUpperCase() : 'N/A'}</span>
+                        <span class="detail-value">
+                            <span class="storage-badge ${message.storage}">
+                                ${message.storage ? message.storage.toUpperCase() : 'N/A'}
+                            </span>
+                        </span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Độ dài:</span>
@@ -1295,6 +1341,7 @@ class SMSManager {
             </div>
         `;
     }
+
 
 
     renderPagination() {
@@ -1887,29 +1934,74 @@ class SMSManager {
     }
 
     // Export Functions
-    exportMessages() {
-        const messages = this.filteredMessages.length > 0 ? this.filteredMessages : this.messages;
-        
-        if (messages.length === 0) {
-            this.showToast('warning', 'Không có dữ liệu', 'Không có tin nhắn nào để xuất');
+    async exportMessages() {
+        // Prevent multiple calls
+        if (this.exporting) {
+            console.log('Already exporting, skipping...');
             return;
         }
-
-        const csvContent = this.generateCSV(messages);
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
         
-        link.setAttribute('href', url);
-        link.setAttribute('download', `sms-export-${this.formatDate(new Date())}.csv`);
-        link.style.visibility = 'hidden';
+        this.exporting = true;
+        console.log('=== EXPORT START ===');
         
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        this.showToast('success', 'Xuất thành công', `Đã xuất ${messages.length} tin nhắn ra file CSV`);
+        try {
+            const messages = this.filteredMessages.length > 0 ? this.filteredMessages : this.messages;
+            
+            if (messages.length === 0) {
+                this.showToast('warning', 'Không có dữ liệu', 'Không có tin nhắn nào để xuất');
+                return;
+            }
+    
+            // Disable export button during processing
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) {
+                exportBtn.disabled = true;
+                exportBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Đang xuất...';
+            }
+    
+            this.showToast('info', 'Đang xuất dữ liệu...', `Chuẩn bị xuất ${messages.length} tin nhắn`);
+    
+            // Generate CSV content
+            const csvContent = this.generateCSV(messages);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            
+            // Create download link
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+            const filename = `sms-export-${timestamp}.csv`;
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up URL object
+            URL.revokeObjectURL(url);
+            
+            this.showToast('success', 'Xuất thành công', `Đã xuất ${messages.length} tin nhắn ra file ${filename}`);
+            
+        } catch (error) {
+            console.error('Export error:', error);
+            this.showToast('error', 'Lỗi xuất dữ liệu', error.message || 'Có lỗi xảy ra khi xuất file');
+        } finally {
+            this.exporting = false;
+            
+            // Re-enable export button
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) {
+                exportBtn.disabled = false;
+                exportBtn.innerHTML = '<i class="bx bx-download"></i> Xuất dữ liệu';
+            }
+            
+            console.log('=== EXPORT END ===');
+        }
     }
+
 
     generateCSV(messages) {
         const headers = ['Số điện thoại', 'Nội dung', 'Loại', 'Thời gian', 'Trạng thái đọc', 'Trạng thái gửi'];
