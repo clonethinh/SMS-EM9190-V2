@@ -37,3 +37,4 @@ if [ "$READ_STATUS" = "1" ]; then
 else
     echo '{ "status": "error", "message": "Invalid read status" }'
 fi
+
