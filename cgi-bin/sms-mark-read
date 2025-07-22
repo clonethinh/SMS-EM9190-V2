@@ -1,0 +1,39 @@
+#!/bin/sh
+echo "Content-Type: application/json; charset=utf-8"
+echo ""
+
+# --- FILE LƯU TRẠNG THÁI ĐỌC ---
+READ_STATUS_FILE="/tmp/sms_read_status"
+
+# --- LẤY PARAMETERS ---
+MESSAGE_ID=$(echo "$QUERY_STRING" | grep -o 'id=[^&]*' | cut -d'=' -f2)
+READ_STATUS=$(echo "$QUERY_STRING" | grep -o 'read=[^&]*' | cut -d'=' -f2)
+
+if [ -z "$MESSAGE_ID" ] || [ -z "$READ_STATUS" ]; then
+    echo '{ "status": "error", "message": "Thiếu tham số id hoặc read" }'
+    exit 1
+fi
+
+# --- TẠO FILE NẾU CHƯA CÓ ---
+if [ ! -f "$READ_STATUS_FILE" ]; then
+    echo "{}" > "$READ_STATUS_FILE"
+fi
+
+# --- CẬP NHẬT READ STATUS ---
+if [ "$READ_STATUS" = "1" ]; then
+    # Đọc file hiện tại
+    CURRENT_DATA=$(cat "$READ_STATUS_FILE")
+    
+    # Thêm/cập nhật read status
+    if echo "$CURRENT_DATA" | grep -q "\"$MESSAGE_ID\""; then
+        # Update existing
+        echo "$CURRENT_DATA" | sed "s/\"$MESSAGE_ID\"[[:space:]]*:[[:space:]]*[^,}]*/\"$MESSAGE_ID\": true/g" > "$READ_STATUS_FILE"
+    else
+        # Add new
+        echo "$CURRENT_DATA" | sed "s/}/,\"$MESSAGE_ID\": true}/g" | sed 's/{,/{\n/g' > "$READ_STATUS_FILE"
+    fi
+    
+    echo '{ "status": "success", "message": "Read status updated" }'
+else
+    echo '{ "status": "error", "message": "Invalid read status" }'
+fi
