@@ -1887,10 +1887,18 @@ class SMSManager {
     }
 
     validatePhone(phone) {
-        // Vietnamese phone number validation
-        const phoneRegex = /^(\+84|84|0)([0-9]{9})$/;
-        return phoneRegex.test(phone.replace(/\s+/g, ''));
+        // Loại bỏ khoảng trắng và ký tự đặc biệt không cần thiết
+        const cleanPhone = phone.replace(/[\s\-\(\)\+]/g, '');
+        
+        // Kiểm tra cơ bản: phải có ít nhất 1 chữ số và không chứa ký tự đặc biệt
+        const basicRegex = /^[0-9]+$/;
+        
+        // Độ dài từ 3-15 số (đủ cho mọi loại số trên thế giới)
+        const lengthValid = cleanPhone.length >= 3 && cleanPhone.length <= 15;
+        
+        return basicRegex.test(cleanPhone) && lengthValid;
     }
+
 
     truncateText(text, maxLength) {
         if (text.length <= maxLength) return text;
