@@ -869,7 +869,8 @@ class SMSManager {
             clearTimeout(timeoutId);
             console.log('Response received:', response.status, response.ok);
             
-            const result = response.status < 500;
+            // ✅ CHỈ coi là thành công khi status 200-299
+            const result = response.ok; // thay vì response.status < 500
             console.log('Connection test result:', result);
             return result;
             
